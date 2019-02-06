@@ -11,14 +11,9 @@ from lxml import html
 
 url = 'http://www1.findu.com/cgi-bin/pcsat.cgi?absolute=1'
 state_file = '/var/local/no84status/state.json'
+credentials_file = '/var/local/no84status/credentials.json'
 
 def parse_site():
-
-    status = {
-        'dp_status': '',
-        'dttm': '',
-        'message': ''
-    }
 
     try:
         page = requests.get(url)
@@ -42,11 +37,11 @@ def parse_site():
             if status == 'PSAT-1]APOFF':
                 return dict({'dp_status': 'APOFF',
                             'raw_dttm': raw_dttm,
-                            'message': f"NO-84 Digipeater observed OFFLINE at {dttm} UTC"})
+                            'message': f"NO-84 Digipeater observed OFFLINE at {dttm} UTC via {url}"})
             elif status == 'PSAT]APRSON':
                 return dict({'dp_status': 'APRSON',
                             'raw_dttm': raw_dttm,
-                            'message': f"NO-84 Digipeater observed ONLINE at {dttm} UTC"})
+                            'message': f"NO-84 Digipeater observed ONLINE at {dttm} UTC via {url}"})
             else:
                 continue
         else:
@@ -99,13 +94,17 @@ def parse_twitter_credentials(credentials_file):
 def tweet(status, credentials_file):
 
     credentials = parse_twitter_credentials(credentials_file)
+    print(credentials)
 
-    api = twitter.Api(credentials)
+    consumer_key = credentials['consumer_key']
+    consumer_secret = credentials['consumer_secret']
+    access_key = credentials['access_token_key']
+    access_secret = credentials['access_token_secret']
 
-    #api = twitter.Api(consumer_key='twitter consumer key',
-    #                  consumer_secret='twitter consumer secret',
-    #                  access_token_key='the_key_given',
-    #                  access_token_secret='the_key_secret')
+    api = twitter.Api(consumer_key=consumer_key, 
+                      consumer_secret=consumer_secret,
+                      access_token_key=access_key,
+                      access_token_secret=access_secret)
 
     try:
         status = api.PostUpdate(status)
@@ -124,7 +123,7 @@ def main():
     if state['dp_status'] != loc['dp_status']:
         print(f"INFO: STATUS CHANGE {loc['dp_status']} to {state['dp_status']}")
         
-        tweet(state['dp_status'])
+        tweet(state['message'], credentials_file)
         write_status_file(state_file, state)
 
 if __name__ == "__main__":
