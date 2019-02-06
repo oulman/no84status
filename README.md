@@ -2,6 +2,9 @@
 
 ## About
 
+These scripts update the @no84status account reporting changes to the NO-84 APRS digipeater via
+http://www.findu.com/cgi-bin/pcsat.cgi
+
 ## Setup
 
 1. Set up the environment
